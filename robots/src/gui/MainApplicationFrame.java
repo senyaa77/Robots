@@ -16,6 +16,9 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import log.Logger;
 
+import java.awt.event.WindowEvent
+import java.awt.event.WindowAdapter
+
 /**
  * Что требуется сделать:
  * 1. Метод создания меню перегружен функционалом и трудно читается. 
@@ -47,6 +50,13 @@ public class MainApplicationFrame extends JFrame
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                exitApplication();
+            }
+        });
     }
     
     protected LogWindow createLogWindow()
