@@ -17,9 +17,7 @@ public class RobotsProgram
           UIManager.put("OptionPane.cancelButtonText", "Отмена");
           UIManager.put("OptionPane.okButtonText", "Готово");
           // -------------------------------------
-//        UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-//        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//        UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+
       } catch (Exception e) {
         e.printStackTrace();
       }
