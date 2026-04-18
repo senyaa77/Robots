@@ -13,11 +13,12 @@ import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.JOptionPane;
 
 import log.Logger;
 
-import java.awt.event.WindowEvent
-import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
 
 /**
  * Что требуется сделать:
@@ -80,8 +81,8 @@ public class MainApplicationFrame extends JFrame
     {
         JMenuBar menuBar = new JMenuBar();
 
-        menuBar.add(lookAndFeelMenu);
-        menuBar.add(testMenu);
+        menuBar.add(createLookAndFeelMenu());
+        menuBar.add(createTestMenu());
         menuBar.add(createActionMenu()); // Добавляем наше новое меню
 
         return menuBar;
