@@ -145,19 +145,20 @@ public class MainApplicationFrame extends JFrame
     }
 
     private void exitApplication() {
-        Object[] options = { "Да", "Нет" };
-        int n = JOptionPane.showOptionDialog(this,
+        int n = JOptionPane.showConfirmDialog(
+                this,
                 "Вы действительно хотите выйти?",
                 "Подтверждение выхода",
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                options,
-                options[0]);
+                JOptionPane.QUESTION_MESSAGE
+        );
+
         if (n == JOptionPane.YES_OPTION) {
-            // В будущем здесь добавится вызов метода сохранения состояния окон
-            this.dispose();
-            System.exit(0);
+            // Проходим по всем JInternalFrame на панели
+            for (JInternalFrame frame : desktopPane.getAllFrames()) {
+                frame.dispose(); // Это вызовет метод dispose у GameWindow и остановит таймер
+            }
+            this.dispose(); // Закрываем главное окно
         }
     }
 }

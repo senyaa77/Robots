@@ -22,6 +22,11 @@ public class GameVisualizer extends JPanel
         Timer timer = new Timer("events generator", true);
         return timer;
     }
+
+    public void stopTimer() {
+        m_timer.cancel();
+        m_timer.purge();
+    }
     
     private volatile double m_robotPositionX = 100;
     private volatile double m_robotPositionY = 100; 
