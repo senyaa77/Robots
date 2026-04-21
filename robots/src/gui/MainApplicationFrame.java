@@ -144,6 +144,23 @@ public class MainApplicationFrame extends JFrame
         }
     }
 
+    private final WindowConfigManager configManager = new WindowConfigManager();
+
+    private void saveWindowStates() {
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            // префикс для ключей
+            String prefix = frame.getTitle() + ".";
+
+            configManager.setProperty(prefix + "x", String.valueOf(frame.getX()));
+            configManager.setProperty(prefix + "y", String.valueOf(frame.getY()));
+            configManager.setProperty(prefix + "width", String.valueOf(frame.getWidth()));
+            configManager.setProperty(prefix + "height", String.valueOf(frame.getHeight()));
+            configManager.setProperty(prefix + "isIcon", String.valueOf(frame.isIcon())); // Свернуто
+            configManager.setProperty(prefix + "isMaximum", String.valueOf(frame.isMaximum())); // Развернуто
+        }
+        configManager.save();
+    }
+
     private void exitApplication() {
         int n = JOptionPane.showConfirmDialog(
                 this,
@@ -154,10 +171,12 @@ public class MainApplicationFrame extends JFrame
         );
 
         if (n == JOptionPane.YES_OPTION) {
-            // Проходим по всем JInternalFrame на панели
+            saveWindowStates();
+
             for (JInternalFrame frame : desktopPane.getAllFrames()) {
                 frame.dispose(); // Это вызовет метод dispose у GameWindow и остановит таймер
             }
+
             this.dispose(); // Закрываем главное окно
         }
     }
