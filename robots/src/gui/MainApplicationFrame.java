@@ -69,6 +69,7 @@ public class MainApplicationFrame extends JFrame
     {
         desktopPane.add(frame);
         frame.setVisible(true);
+        restoreWindowState(frame);
     }
     
     private JMenuBar generateMenuBar()
@@ -180,4 +181,46 @@ public class MainApplicationFrame extends JFrame
             this.dispose(); // Закрываем главное окно
         }
     }
+
+    private void restoreWindowState(JInternalFrame frame) {
+        String prefix = frame.getTitle() + ".";
+
+        // 1. Читаем данные заранее (вне потока отрисовки)
+        String xStr = configManager.getProperty(prefix + "x");
+        String yStr = configManager.getProperty(prefix + "y");
+        String wStr = configManager.getProperty(prefix + "width");
+        String hStr = configManager.getProperty(prefix + "height");
+        String isIconStr = configManager.getProperty(prefix + "isIcon");
+        String isMaxStr = configManager.getProperty(prefix + "isMaximum");
+
+        // Если данных в файле нет, ничего не делаем и выходим
+        if (xStr == null || yStr == null) return;
+
+        // 2. Используем invokeLater, чтобы дождаться полной инициализации GUI
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Устанавливаем границы окна
+                frame.setBounds(
+                        Integer.parseInt(xStr),
+                        Integer.parseInt(yStr),
+                        Integer.parseInt(wStr),
+                        Integer.parseInt(hStr)
+                );
+
+                // Состояния сворачивания/разворачивания делаем через еще один вложенный цикл
+                // Это гарантирует, что Swing уже "знает" финальный размер окна
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        if (Boolean.parseBoolean(isMaxStr)) frame.setMaximum(true);
+                        if (Boolean.parseBoolean(isIconStr)) frame.setIcon(true);
+                    } catch (Exception e) {
+                        // Игнорируем вето на изменение состояния
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Ошибка восстановления окна " + frame.getTitle());
+            }
+        });
+    }
+
 }
