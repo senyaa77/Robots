@@ -15,6 +15,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JOptionPane;
 
+import config.ConfigManager;
 import log.Logger;
 
 import java.awt.event.WindowEvent;
@@ -23,19 +24,17 @@ import java.awt.event.WindowAdapter;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    
+
     public MainApplicationFrame() {
-        //Make the big window be indented 50 pixels from each edge
-        //of the screen.
-        int inset = 50;        
+        int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
             screenSize.width  - inset*2,
             screenSize.height - inset*2);
 
         setContentPane(desktopPane);
-        
-        
+
+
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
@@ -53,7 +52,7 @@ public class MainApplicationFrame extends JFrame
             }
         });
     }
-    
+
     protected LogWindow createLogWindow()
     {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
@@ -64,21 +63,21 @@ public class MainApplicationFrame extends JFrame
         Logger.debug("Протокол работает");
         return logWindow;
     }
-    
+
     protected void addWindow(JInternalFrame frame)
     {
         desktopPane.add(frame);
         frame.setVisible(true);
         restoreWindowState(frame);
     }
-    
+
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
 
         menuBar.add(createLookAndFeelMenu());
         menuBar.add(createTestMenu());
-        menuBar.add(createActionMenu()); // Добавляем наше новое меню
+        menuBar.add(createActionMenu());
 
         return menuBar;
     }
@@ -130,7 +129,7 @@ public class MainApplicationFrame extends JFrame
 
         return actionMenu;
     }
-    
+
     private void setLookAndFeel(String className)
     {
         try
@@ -145,22 +144,20 @@ public class MainApplicationFrame extends JFrame
         }
     }
 
-    private final WindowConfigManager configManager = new WindowConfigManager();
+    private final ConfigManager configManager = new ConfigManager();
+    private final WindowStateManager windowStateManager = new WindowStateManager(configManager);
 
     private void saveWindowStates() {
         for (JInternalFrame frame : desktopPane.getAllFrames()) {
-            // префикс для ключей
-            String prefix = frame.getTitle() + ".";
+            String windowId = frame.getName();
 
-            configManager.setProperty(prefix + "x", String.valueOf(frame.getX()));
-            configManager.setProperty(prefix + "y", String.valueOf(frame.getY()));
-            configManager.setProperty(prefix + "width", String.valueOf(frame.getWidth()));
-            configManager.setProperty(prefix + "height", String.valueOf(frame.getHeight()));
-            configManager.setProperty(prefix + "isIcon", String.valueOf(frame.isIcon())); // Свернуто
-            configManager.setProperty(prefix + "isMaximum", String.valueOf(frame.isMaximum())); // Развернуто
+            if (windowId != null && !windowId.isEmpty()) {
+                windowStateManager.saveInternalFrameState(windowId, frame);
+            }
         }
         configManager.save();
     }
+
 
     private void exitApplication() {
         int n = JOptionPane.showConfirmDialog(
@@ -175,7 +172,7 @@ public class MainApplicationFrame extends JFrame
             saveWindowStates();
 
             for (JInternalFrame frame : desktopPane.getAllFrames()) {
-                frame.dispose(); // Это вызовет метод dispose у GameWindow и остановит таймер
+                frame.dispose();
             }
 
             this.dispose(); // Закрываем главное окно
@@ -183,44 +180,20 @@ public class MainApplicationFrame extends JFrame
     }
 
     private void restoreWindowState(JInternalFrame frame) {
-        String prefix = frame.getTitle() + ".";
+        String windowId = frame.getName();
 
-        // 1. Читаем данные заранее (вне потока отрисовки)
-        String xStr = configManager.getProperty(prefix + "x");
-        String yStr = configManager.getProperty(prefix + "y");
-        String wStr = configManager.getProperty(prefix + "width");
-        String hStr = configManager.getProperty(prefix + "height");
-        String isIconStr = configManager.getProperty(prefix + "isIcon");
-        String isMaxStr = configManager.getProperty(prefix + "isMaximum");
+        if (windowId == null || windowId.isEmpty()) {
+            return;
+        }
 
-        // Если данных в файле нет, ничего не делаем и выходим
-        if (xStr == null || yStr == null) return;
+        int defaultX = 10, defaultY = 10, defaultWidth = 400, defaultHeight = 400;
 
-        // 2. Используем invokeLater, чтобы дождаться полной инициализации GUI
-        SwingUtilities.invokeLater(() -> {
-            try {
-                // Устанавливаем границы окна
-                frame.setBounds(
-                        Integer.parseInt(xStr),
-                        Integer.parseInt(yStr),
-                        Integer.parseInt(wStr),
-                        Integer.parseInt(hStr)
-                );
+        if ("log_window".equals(windowId)) {
+            defaultX = 10; defaultY = 10; defaultWidth = 300; defaultHeight = 800;
+        } else if ("game_window".equals(windowId)) {
+            defaultX = 320; defaultY = 10; defaultWidth = 400; defaultHeight = 400;
+        }
 
-                // Состояния сворачивания/разворачивания делаем через еще один вложенный цикл
-                // Это гарантирует, что Swing уже "знает" финальный размер окна
-                SwingUtilities.invokeLater(() -> {
-                    try {
-                        if (Boolean.parseBoolean(isMaxStr)) frame.setMaximum(true);
-                        if (Boolean.parseBoolean(isIconStr)) frame.setIcon(true);
-                    } catch (Exception e) {
-                        // Игнорируем вето на изменение состояния
-                    }
-                });
-            } catch (Exception e) {
-                System.err.println("Ошибка восстановления окна " + frame.getTitle());
-            }
-        });
+        windowStateManager.restoreInternalFrameState(windowId, frame, defaultX, defaultY, defaultWidth, defaultHeight);
     }
-
 }
